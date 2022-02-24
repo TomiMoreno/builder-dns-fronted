@@ -2,13 +2,10 @@ import { Button, Container, Text } from "@nextui-org/react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { Footer } from "../components/Footer";
-import { Header } from "../components/Header";
+import { MintForm } from "../components/MintForm";
 
 const Home: NextPage = () => {
   const [currentAccount, setCurrentAccount] = useState("");
-  const [domain, setDomain] = useState("");
-  const [record, setRecord] = useState("");
 
   const connectWallet = async () => {
     try {
@@ -71,7 +68,7 @@ const Home: NextPage = () => {
       </Container>
       <Container>
         {currentAccount ? (
-          <Text>Your address is {currentAccount}</Text>
+          <MintForm />
         ) : (
           <Button color="gradient" onClick={connectWallet}>
             Connect wallet
