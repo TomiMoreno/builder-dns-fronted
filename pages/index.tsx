@@ -3,9 +3,15 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { MintForm } from "../components/MintForm";
+import { networks } from "../utils/networks";
 
+// Reload the page when they change networks
+function handleChainChanged() {
+  window.location.reload();
+}
 const Home: NextPage = () => {
   const [currentAccount, setCurrentAccount] = useState("");
+  const [network, setNetwork] = useState("");
 
   const connectWallet = async () => {
     try {
@@ -16,13 +22,9 @@ const Home: NextPage = () => {
         return;
       }
 
-      // Fancy method to request access to account.
       const accounts = await ethereum.request({
         method: "eth_requestAccounts",
       });
-
-      // Boom! This should print out public address once we authorize Metamask.
-      console.log("Connected", accounts[0]);
       setCurrentAccount(accounts[0]);
     } catch (error) {
       console.log(error);
@@ -48,11 +50,58 @@ const Home: NextPage = () => {
     } else {
       console.log("No authorized account found");
     }
+    const chainId = (await ethereum.request({
+      method: "eth_chainId",
+    })) as keyof typeof networks;
+    setNetwork(networks[chainId] || "Unknown");
+
+    ethereum.on("chainChanged", handleChainChanged);
   };
 
   useEffect(() => {
     checkIfWalletIsConnected();
   }, []);
+
+  const switchNetwork = async () => {
+    if (window.ethereum) {
+      try {
+        // Try to switch to the Mumbai testnet
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x13881" }], // Check networks.js for hexadecimal network ids
+        });
+      } catch (error: any & { code: number }) {
+        if (error.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: "0x13881",
+                  chainName: "Polygon Mumbai Testnet",
+                  rpcUrls: ["https://rpc-mumbai.maticvigil.com/"],
+                  nativeCurrency: {
+                    name: "Mumbai Matic",
+                    symbol: "MATIC",
+                    decimals: 18,
+                  },
+                  blockExplorerUrls: ["https://mumbai.polygonscan.com/"],
+                },
+              ],
+            });
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        console.log(error);
+      }
+    } else {
+      // If window.ethereum is not found then MetaMask is not installed
+      alert(
+        "MetaMask is not installed. Please install it to use this app: https://metamask.io/download.html"
+      );
+    }
+  };
 
   return (
     <>
@@ -68,7 +117,19 @@ const Home: NextPage = () => {
       </Container>
       <Container>
         {currentAccount ? (
-          <MintForm />
+          <>
+            <Text>
+              You are connected to {network} with account {currentAccount}
+            </Text>
+            {network !== "Polygon Mumbai Testnet" ? (
+              <>
+                <Text>You can mint domains on the Polygon Mumbai Testnet.</Text>
+                <Button onClick={switchNetwork}>Switch to Mumbai</Button>
+              </>
+            ) : (
+              <MintForm />
+            )}
+          </>
         ) : (
           <Button color="gradient" onClick={connectWallet}>
             Connect wallet
