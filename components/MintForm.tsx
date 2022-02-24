@@ -1,7 +1,7 @@
 import { Button, Card, Input, Text } from "@nextui-org/react";
 import { ethers } from "ethers";
 import { FormEventHandler, useState } from "react";
-import contractABI from "../utils/ContractABI.json";
+import contractABI from "../utils/contractABI";
 const CONTRACT_ADDRESS = "0x87061dB3CB124826Ee1742C4fcd3767f9441A45D";
 export function MintForm() {
   const [domain, setDomain] = useState("");
